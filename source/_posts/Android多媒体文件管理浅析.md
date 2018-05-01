@@ -168,13 +168,15 @@ String[] selectionArgs = new String[]{"video/mp4", "video/avi", "video/quicktime
 
 ## 基本方法
 
-发送广播，通知媒体库刷新
+### 方法一：发送广播，通知媒体库刷新
 
 ```
 Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
 intent.setData(Uri.fromFile(new File(filePath)));
 context.sendBroadcast(intent);
 ```
+
+### 方法二：插入数据库
 
 也可以使用直接插入媒体库数据库的方法来实现（但这两种方法不能同时使用，会导致媒体库中出现重复的数据）
 
@@ -189,9 +191,26 @@ context.getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
 
 插入数据库的这种方法，这边博文中有详细介绍[blog](http://blog.csdn.net/chendong_/article/details/52290329)
 
+### 方法三：MediaScannerConnection.scanFile
+
+```
+public static void insert(Context context, String[] paths, String[] types) {
+    MediaScannerConnection.scanFile(
+            context,
+            paths,
+            types,
+            new MediaScannerConnection.OnScanCompletedListener() {
+                @Override
+                public void onScanCompleted(String path, Uri uri) {
+                    LogUtils.i(TAG, "insert onScanCompleted path " + path + " uri " + uri);
+                }
+            });
+}
+```
+
 ## 机型适配
 
-部分机型上述两种方法都不能实现实时刷新，考虑可能是第三方ROM的改动导致的，将目录设置为`/sdcard/DCIM/Camera`可以解决大部分机型的问题，但vivo和魅族的手机仍旧不能刷新，vivo的地址应该为`/sdcard/相机`，魅族的地址应该为`/sdcard/DCIM/Video`
+部分机型上述两种方法都不能实现实时刷新（只能重启手机才能看到效果），考虑可能是第三方ROM的改动导致的，将目录设置为`/sdcard/DCIM/Camera`可以解决大部分机型的问题，但vivo和魅族的手机仍旧不能刷新，vivo的地址应该为`/sdcard/相机`，魅族的地址应该为`/sdcard/DCIM/Video`
 
 下面给出一个获取输出地址的方法
 
